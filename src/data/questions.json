@@ -1,1 +1,127 @@
+[
+  {
+    "id": "du-2022-bangla-001",
+    "university": "DU",
+    "unit": "Ka",
+    "year": 2022,
+    "subject": "বাংলা",
+    "chapter": "সন্ধি",
+    "question": "‘সমুদ্র’ শব্দটি কোন সন্ধির উদাহরণ?",
+    "options": ["স্বরসন্ধি", "ব্যঞ্জনসন্ধি", "বিসর্গসন্ধি", "নিপাতনে সিদ্ধ"],
+    "answerIndex": 1,
+    "explanation": {
+      "correct": "‘সম্ + উদ্র’ — এখানে ব্যঞ্জনবর্ণের সাথে স্বরবর্ণের মিলনে সন্ধি হয়েছে, তাই এটি ব্যঞ্জনসন্ধি।",
+      "wrong": [
+        "স্বরসন্ধি হয় দুটি স্বরবর্ণের মিলনে, এখানে তা ঘটেনি।",
+        "বিসর্গসন্ধিতে বিসর্গ (ঃ) থাকা আবশ্যক, এখানে নেই।",
+        "এটি নিয়মমাফিক সন্ধি, তাই নিপাতনে সিদ্ধ নয়।"
+      ]
+    },
+    "timesAsked": 8,
+    "language": "bn"
+  },
+  {
+    "id": "du-2021-bangla-002",
+    "university": "DU",
+    "unit": "Ka",
+    "year": 2021,
+    "subject": "বাংলা",
+    "chapter": "বাগধারা",
+    "question": "‘অরণ্যে রোদন’ বাগধারাটির অর্থ কী?",
+    "options": ["নিরর্থক চেষ্টা", "আনন্দ প্রকাশ", "ভীষণ ক্রোধ", "গভীর দুঃখ"],
+    "answerIndex": 0,
+    "explanation": {
+      "correct": "‘অরণ্যে রোদন’ মানে এমন স্থানে কান্না বা আবেদন করা যেখানে কেউ শোনার নেই — অর্থাৎ নিরর্থক চেষ্টা।",
+      "wrong": [
+        "বাগধারাটি আনন্দ নয়, বরং ব্যর্থতা বোঝায়।",
+        "এখানে ক্রোধের কোনো ইঙ্গিত নেই।",
+        "এটি দুঃখ নয়, বরং প্রচেষ্টার নিষ্ফলতা বোঝায়।"
+      ]
+    },
+    "timesAsked": 5,
+    "language": "bn"
+  },
+  {
+    "id": "gst-2023-english-001",
+    "university": "GST",
+    "unit": "B",
+    "year": 2023,
+    "subject": "English",
+    "chapter": "Synonym",
+    "question": "Choose the correct synonym of 'Eloquent'.",
+    "options": ["Fluent", "Silent", "Confused", "Rude"],
+    "answerIndex": 0,
+    "explanation": {
+      "correct": "'Eloquent' means fluent or persuasive in speaking, so 'Fluent' is the closest synonym.",
+      "wrong": [
+        "'Silent' is nearly the opposite of eloquent.",
+        "'Confused' has no relation to fluency of speech.",
+        "'Rude' describes manner, not speaking ability."
+      ]
+    },
+    "timesAsked": 3,
+    "language": "en"
+  },
+  {
+    "id": "gst-2022-english-002",
+    "university": "GST",
+    "unit": "B",
+    "year": 2022,
+    "subject": "English",
+    "chapter": "Preposition",
+    "question": "He is good ___ mathematics.",
+    "options": ["in", "at", "on", "with"],
+    "answerIndex": 1,
+    "explanation": {
+      "correct": "'Good at' is the correct idiomatic preposition used for skills/subjects.",
+      "wrong": [
+        "'Good in' is used for a place or situation, not a subject skill.",
+        "'Good on' is not idiomatically correct here.",
+        "'Good with' is used for handling people/objects, not academic subjects."
+      ]
+    },
+    "timesAsked": 6,
+    "language": "en"
+  },
+  {
+    "id": "ru-2020-gk-001",
+    "university": "RU",
+    "year": 2020,
+    "subject": "সাধারণ জ্ঞান",
+    "chapter": "বাংলাদেশ বিষয়াবলি",
+    "question": "বাংলাদেশের সংবিধান কার্যকর হয় কত সালে?",
+    "options": ["১৯৭১", "১৯৭২", "১৯৭৩", "১৯৭৪"],
+    "answerIndex": 1,
+    "explanation": {
+      "correct": "বাংলাদেশের সংবিধান ১৯৭২ সালের ১৬ ডিসেম্বর কার্যকর হয়।",
+      "wrong": [
+        "১৯৭১ সালে বাংলাদেশ স্বাধীন হয়, সংবিধান কার্যকর হয়নি তখনও।",
+        "১৯৭৩ সালে প্রথম সংসদ নির্বাচন অনুষ্ঠিত হয়, সংবিধান কার্যকরের সাল নয়।",
+        "১৯৭৪ সালের সাথে সংবিধান কার্যকরের কোনো সম্পর্ক নেই।"
+      ]
+    },
+    "timesAsked": 9,
+    "language": "bn"
+  },
+  {
+    "id": "cu-2021-math-001",
+    "university": "CU",
+    "year": 2021,
+    "subject": "গণিত",
+    "chapter": "বীজগণিত",
+    "question": "যদি x + 1/x = 3 হয়, তবে x² + 1/x² এর মান কত?",
+    "options": ["7", "9", "11", "5"],
+    "answerIndex": 0,
+    "explanation": {
+      "correct": "x² + 1/x² = (x + 1/x)² − 2 = 3² − 2 = 9 − 2 = 7।",
+      "wrong": [
+        "৯ পাওয়া যায় শুধু বর্গ করলে, বিয়োগ না করলে — যা ভুল পদ্ধতি।",
+        "১১ কোনো সঠিক গাণিতিক ধাপ থেকে আসে না।",
+        "৫ ভুল হিসাবের ফল।"
+      ]
+    },
+    "timesAsked": 4,
+    "language": "bn"
+  }
+]
 
