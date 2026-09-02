@@ -1,0 +1,29 @@
+name: Send Daily Reminders
+
+on:
+  schedule:
+    # প্রতিদিন বাংলাদেশ সময় সন্ধ্যা ৭টায় (UTC 13:00 = BDT 19:00)
+    - cron: '0 13 * * *'
+  workflow_dispatch:
+
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install script dependencies
+        run: npm install @supabase/supabase-js firebase-admin
+
+      - name: Run reminder script
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        run: node scripts/send-daily-reminders.js
