@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { UserData, AttemptRecord, SpacedRevisionItem, MockTestResult, LeaderboardEntry, CommunitySubmission, Badge } from '../types';
 import { loadUserData, saveUserData, todayStr, daysBetween } from '../utils/storage';
-import questionsData from '../data/questions.json';
+import { allQuestions } from '../data/loadQuestions';
 import { Question } from '../types';
 import { getEarnedBadgeIds, getBadgeById } from '../utils/badges';
 import { maybeFireDailyReminder } from '../utils/notifications';
@@ -47,7 +47,7 @@ const AppDataContext = createContext<AppDataContextType | null>(null);
 
 export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [userData, setUserData] = useState<UserData>(() => loadUserData());
-  const questions = questionsData as Question[];
+  const questions = allQuestions;
 
   useEffect(() => {
     saveUserData(userData);
