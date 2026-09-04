@@ -7,6 +7,8 @@ import { PushInit } from './components/PushInit';
 import { DailyProgressAutoSync } from './components/DailyProgressAutoSync';
 import { AdMobInit } from './components/AdMobInit';
 import { InterstitialAdManager } from './components/InterstitialAdManager';
+import { PageViewTracker } from './components/PageViewTracker';
+import { OfflineBanner } from './components/OfflineBanner';
 import { Home } from './pages/Home';
 import { Browse } from './pages/Browse';
 import { Practice } from './pages/Practice';
@@ -34,12 +36,18 @@ import { ExamResults } from './pages/ExamResults';
 import { DailyLesson } from './pages/DailyLesson';
 import { Subscription } from './pages/Subscription';
 import { AdminSubscriptions } from './pages/AdminSubscriptions';
+import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { TermsOfService } from './pages/TermsOfService';
+import { AdminRewards } from './pages/AdminRewards';
+import { HallOfFame } from './pages/HallOfFame';
 
 export default function App() {
   return (
     <div className="min-h-screen bg-paper text-ink-900 dark:bg-ink-900 dark:text-ink-100">
+      <OfflineBanner />
       <AdMobInit />
       <InterstitialAdManager />
+      <PageViewTracker />
       <ScoreSync />
       <PushInit />
       <DailyProgressAutoSync />
@@ -72,6 +80,10 @@ export default function App() {
         <Route path="/daily" element={<DailyLesson />} />
         <Route path="/subscription" element={<Subscription />} />
         <Route path="/admin-subscriptions" element={<AdminSubscriptions />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/admin-rewards" element={<AdminRewards />} />
+        <Route path="/hall-of-fame" element={<HallOfFame />} />
       </Routes>
       <BottomNav />
     </div>
