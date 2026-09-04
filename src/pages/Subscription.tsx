@@ -73,7 +73,11 @@ export const Subscription: React.FC = () => {
     });
     setSubmitting(false);
     if (error) {
-      setMsg({ type: 'error', text: 'এরর: ' + error.message });
+      if (error.code === '23505') {
+        setMsg({ type: 'error', text: '⚠️ এই Transaction ID আগেই ব্যবহার করা হয়েছে। ভুল করে থাকলে সঠিক ID দিয়ে আবার চেষ্টা করো, অথবা সাপোর্টে যোগাযোগ করো।' });
+      } else {
+        setMsg({ type: 'error', text: 'এরর: ' + error.message });
+      }
       return;
     }
     setMsg({ type: 'success', text: '✅ পাঠানো হয়েছে! Admin যাচাই করে ২৪ ঘণ্টার মধ্যে অনুমোদন করবে।' });
