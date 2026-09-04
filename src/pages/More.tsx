@@ -3,16 +3,19 @@ import { Link } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { useAppData } from '../context/AppDataContext';
 import { useAuth } from '../context/AuthContext';
+import { useIsAdmin } from '../hooks/useIsAdmin';
 import { requestNotificationPermission, isNotificationSupported } from '../utils/notifications';
 import { shareApp } from '../utils/share';
 
 export const More: React.FC = () => {
   const { userData, toggleDarkMode, resetAllData, setExamDate, setNotificationSettings } = useAppData();
   const { user, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const [notifMsg, setNotifMsg] = useState('');
 
-  const items = [
+  const commonItems = [
     { to: '/subscription', icon: '👑', label: 'প্রিমিয়াম সাবস্ক্রিপশন' },
+    { to: '/hall-of-fame', icon: '🏆', label: 'বিজয়ীদের তালিকা' },
     { to: '/daily', icon: '📅', label: 'আজকের পড়া' },
     { to: '/bangla', icon: '🅰️', label: 'বাংলা' },
     { to: '/english', icon: '🔤', label: 'English' },
@@ -26,11 +29,19 @@ export const More: React.FC = () => {
     { to: '/badges', icon: '🏅', label: 'ব্যাজ' },
     { to: '/leaderboard', icon: '🏆', label: 'লিডারবোর্ড' },
     { to: '/ai-help', icon: '🤖', label: 'AI ডাউট সলভার' },
-    { to: '/community', icon: '📝', label: 'প্রশ্ন সাবমিট করো' },
+    { to: '/community', icon: '📝', label: 'প্রশ্ন সাবমিট করো' }
+  ];
+
+  // ⚠️ এই ৩টা লিংক শুধু is_admin = true থাকা ইউজারই মেনুতে দেখবে।
+  // (Database-এও RLS দিয়ে সুরক্ষিত আছে — এটা শুধু UI-তে দেখানো/লুকানোর জন্য)
+  const adminItems = [
     { to: '/admin', icon: '➕', label: 'প্রশ্ন যোগ করো (Admin)' },
     { to: '/admin-exam', icon: '🛠️', label: 'এক্সাম বানাও (Admin)' },
-    { to: '/admin-subscriptions', icon: '💳', label: 'সাবস্ক্রিপশন অ্যাপ্রুভ (Admin)' }
+    { to: '/admin-subscriptions', icon: '💳', label: 'সাবস্ক্রিপশন অ্যাপ্রুভ (Admin)' },
+    { to: '/admin-rewards', icon: '🏆', label: 'পুরস্কার প্যানেল (Admin)' }
   ];
+
+  const items = isAdmin ? [...commonItems, ...adminItems] : commonItems;
 
   const toggleNotifications = async (checked: boolean) => {
     if (checked) {
@@ -65,7 +76,7 @@ export const More: React.FC = () => {
             </div>
           ) : (
             <div className="flex items-center justify-between">
-              <p className="text-sm text-ink-800 dark:text-ink-100">লিডারবোর্ড ও এক্সাম রেজাল্টের জন্য লগইন করো</p>
+              <p className="text-sm text-ink-800 dark:text-ink-100">প্রিমিয়াম কিনতে হলে লগইন করো</p>
               <Link to="/login" className="rounded-full bg-amber px-4 py-1.5 text-sm font-semibold text-ink-950">
                 লগইন
               </Link>
@@ -79,6 +90,11 @@ export const More: React.FC = () => {
               <Link to={it.to} className="flex items-center gap-3 bg-white px-4 py-3 dark:bg-ink-800">
                 <span className="text-lg">{it.icon}</span>
                 <span className="text-sm text-ink-800 dark:text-ink-100">{it.label}</span>
+                {it.to.includes('admin') && (
+                  <span className="ml-auto rounded-full bg-amber/15 px-2 py-0.5 text-[10px] font-medium text-amber-dark dark:text-amber">
+                    ADMIN
+                  </span>
+                )}
               </Link>
             </li>
           ))}
@@ -153,6 +169,10 @@ export const More: React.FC = () => {
         </section>
 
         <p className="text-center text-xs text-ink-400">প্রশ্নব্যাংক · তোমার ফোন থেকেই তৈরি ও পরিচালিত</p>
+        <div className="flex justify-center gap-4 pb-2 text-xs text-ink-400">
+          <Link to="/privacy-policy" className="underline">গোপনীয়তা নীতি</Link>
+          <Link to="/terms" className="underline">ব্যবহারের শর্তাবলি</Link>
+        </div>
       </main>
     </div>
   );
