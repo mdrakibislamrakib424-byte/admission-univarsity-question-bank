@@ -30,6 +30,20 @@ export async function syncTodayProgress(userId: string, attempts: AttemptRecord[
   if (error) console.error('দৈনিক প্রোগ্রেস সিঙ্ক করতে সমস্যা:', error.message);
 }
 
+export async function fetchTodayProgress(userId: string): Promise<{ questionsDone: number; correctDone: number }> {
+  const { data, error } = await supabase
+    .from('daily_progress')
+    .select('questions_done, correct_done')
+    .eq('user_id', userId)
+    .eq('progress_date', todayDateStr())
+    .maybeSingle();
+  if (error) {
+    console.error('আজকের প্রোগ্রেস আনতে সমস্যা:', error.message);
+    return { questionsDone: 0, correctDone: 0 };
+  }
+  return { questionsDone: data?.questions_done ?? 0, correctDone: data?.correct_done ?? 0 };
+}
+
 export interface DailyProgressRow {
   progress_date: string;
   questions_done: number;
