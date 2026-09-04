@@ -1,14 +1,18 @@
 // src/utils/contentGate.ts
 //
-// ফ্রি ইউজারদের জন্য সীমাবদ্ধতা এখান থেকেই নিয়ন্ত্রণ হয়:
-// ১) গত ১০ বছরের আগের প্রশ্ন দেখা যাবে না
-// ২) দিনে মাত্র ২টা প্রশ্ন প্র্যাকটিস করা যাবে
-// ৩) কোনো Exam দেওয়া যাবে না (এটা ExamList/ExamTake পেজে সরাসরি চেক হয়)
+// অ্যাক্সেসের নিয়ম এখন দুই স্তরে:
+//
+// ১) Subscriber (৳৮৫০ / ৬ মাস) → সব কিছু আনলিমিটেড
+// ২) সবাই বাকি (Login করা থাকুক বা না থাকুক, সাবস্ক্রাইব না করলে) →
+//    - সারাজীবনে ১টা ফ্রি Exam
+//    - সারাজীবনে ১টা ফ্রি Practice সেশন
+//    - প্রতিটা বিষয়ে (বাংলা/English) শুধু ১টা টপিক খোলা থাকে
+//    - গত ১০ বছরের বেশি পুরনো প্রশ্ন দেখা যায় না
 
 import { Question } from '../types';
 
-export const FREE_DAILY_PRACTICE_LIMIT = 2;
-export const FREE_YEAR_WINDOW = 10; // শুধু গত ১০ বছরের প্রশ্ন দেখা যাবে
+export const FREE_YEAR_WINDOW = 10;
+export const FREE_TOPICS_PER_SUBJECT = 1;
 
 export function filterQuestionsForAccess(questions: Question[], isSubscribed: boolean): Question[] {
   if (isSubscribed) return questions;
@@ -16,11 +20,12 @@ export function filterQuestionsForAccess(questions: Question[], isSubscribed: bo
   return questions.filter(q => q.year >= cutoffYear);
 }
 
-export function canPracticeMoreToday(isSubscribed: boolean, todayQuestionsDone: number): boolean {
-  if (isSubscribed) return true;
-  return todayQuestionsDone < FREE_DAILY_PRACTICE_LIMIT;
+export function getUnlockedTopics(allTopics: string[], isSubscribed: boolean): string[] {
+  if (isSubscribed) return allTopics;
+  return allTopics.slice(0, FREE_TOPICS_PER_SUBJECT);
 }
 
-export function remainingFreePractice(todayQuestionsDone: number): number {
-  return Math.max(0, FREE_DAILY_PRACTICE_LIMIT - todayQuestionsDone);
+export function isTopicLocked(topic: string, allTopics: string[], isSubscribed: boolean): boolean {
+  if (isSubscribed) return false;
+  return !getUnlockedTopics(allTopics, isSubscribed).includes(topic);
 }
