@@ -3,8 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
 import { useSubscription } from '../hooks/useSubscription';
+import { UpgradeBanner } from '../components/UpgradeBanner';
+import { hasUsedFreeExam } from '../utils/guestLimits';
 
 interface ExamRow {
   id: string;
@@ -14,7 +15,6 @@ interface ExamRow {
 }
 
 export const ExamList: React.FC = () => {
-  const { user } = useAuth();
   const { isSubscribed, loading: subLoading } = useSubscription();
   const [exams, setExams] = useState<ExamRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,29 +31,17 @@ export const ExamList: React.FC = () => {
       });
   }, []);
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-paper pb-24 dark:bg-ink-900">
-        <Header title="📝 এক্সাম" showBack />
-        <main className="mx-auto max-w-lg px-4 py-14 text-center">
-          <p className="text-4xl">🔐</p>
-          <p className="mt-3 text-sm text-ink-500">
-            এক্সাম দিতে <Link to="/login" className="font-semibold text-amber-dark dark:text-amber">লগইন করো</Link>।
-          </p>
-        </main>
-      </div>
-    );
-  }
+  const examUsed = !subLoading && !isSubscribed && hasUsedFreeExam();
 
-  if (!subLoading && !isSubscribed) {
+  if (examUsed) {
     return (
       <div className="min-h-screen bg-paper pb-24 dark:bg-ink-900">
         <Header title="📝 এক্সাম" showBack />
         <main className="mx-auto max-w-lg px-4 py-10 text-center">
-          <div className="rounded-3xl bg-gradient-to-br from-ink-900 to-ink-700 p-8 text-white dark:from-ink-800 dark:to-ink-950">
+          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-ink-900 to-ink-700 p-8 text-white shadow-lg dark:from-ink-800 dark:to-ink-950">
             <p className="text-5xl">👑</p>
-            <p className="mt-3 font-display text-lg font-bold">এক্সাম শুধু প্রিমিয়াম মেম্বারদের জন্য</p>
-            <p className="mt-1 text-sm opacity-80">৳৮৫০ দিয়ে ৬ মাসের প্রিমিয়াম নিয়ে সব এক্সামে অংশ নাও।</p>
+            <p className="mt-3 font-display text-lg font-bold">তোমার ফ্রি এক্সাম ব্যবহার হয়ে গেছে</p>
+            <p className="mt-1 text-sm opacity-80">যত ইচ্ছা এক্সাম দিতে ৳৮৫০ দিয়ে ৬ মাসের প্রিমিয়াম নাও।</p>
             <Link to="/subscription" className="mt-5 block rounded-full bg-amber py-2.5 text-sm font-semibold text-ink-950">
               👑 প্রিমিয়াম নাও
             </Link>
@@ -67,6 +55,10 @@ export const ExamList: React.FC = () => {
     <div className="min-h-screen bg-paper pb-24 dark:bg-ink-900">
       <Header title="📝 এক্সাম" showBack />
       <main className="mx-auto max-w-lg space-y-4 px-4 py-5">
+        {!isSubscribed && !subLoading && (
+          <UpgradeBanner title="তোমার একটামাত্র ফ্রি এক্সাম বাকি" subtitle="প্রিমিয়াম নিলে আনলিমিটেড এক্সাম" />
+        )}
+
         {loading && (
           <div className="space-y-3">
             {[1, 2, 3].map(i => (
