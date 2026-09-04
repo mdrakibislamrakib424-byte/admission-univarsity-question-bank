@@ -1,12 +1,13 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { QuestionCard } from '../components/QuestionCard';
 import { BannerAd } from '../components/BannerAd';
+import { UpgradeBanner } from '../components/UpgradeBanner';
 import { useAppData } from '../context/AppDataContext';
 import { useSubscription } from '../hooks/useSubscription';
-import { todayStr } from '../utils/storage';
-import { filterQuestionsForAccess, canPracticeMoreToday, remainingFreePractice } from '../utils/contentGate';
+import { filterQuestionsForAccess } from '../utils/contentGate';
+import { hasUsedFreeSession, markFreeSessionUsed } from '../utils/guestLimits';
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -21,7 +22,6 @@ export const Practice: React.FC = () => {
   const { questions: allQuestions, userData } = useAppData();
   const { isSubscribed, loading: subLoading } = useSubscription();
   const [params] = useSearchParams();
-  const navigate = useNavigate();
 
   const mode = params.get('mode');
   const ids = params.get('ids');
@@ -29,23 +29,11 @@ export const Practice: React.FC = () => {
   const chapter = params.get('chapter');
   const count = Number(params.get('count') || 0);
 
-  // ফ্রি ইউজার হলে ১০ বছরের বেশি পুরনো প্রশ্ন বাদ যাবে
   const questions = useMemo(() => filterQuestionsForAccess(allQuestions, isSubscribed), [allQuestions, isSubscribed]);
 
-  const todayQuestionsDone = useMemo(
-    () => userData.attempts.filter(a => new Date(a.timestamp).toISOString().slice(0, 10) === todayStr()).length,
-    [userData.attempts]
-  );
-  const canPractice = subLoading || canPracticeMoreToday(isSubscribed, todayQuestionsDone);
+  const sessionLocked = !subLoading && !isSubscribed && hasUsedFreeSession();
 
   const sessionQuestions = useMemo(() => {
-    if (mode === 'daily') {
-      const dc = userData.dailyChallenge;
-      if (dc && dc.date === todayStr()) {
-        return dc.questionIds.map(id => questions.find(q => q.id === id)!).filter(Boolean);
-      }
-      return shuffle(questions).slice(0, Math.min(10, questions.length));
-    }
     if (mode === 'mistakes') {
       return userData.mistakes.map(id => questions.find(q => q.id === id)!).filter(Boolean);
     }
@@ -76,17 +64,23 @@ export const Practice: React.FC = () => {
     setFinished(false);
   }, [sessionQuestions.length]);
 
-  // ফ্রি লিমিট শেষ হলে paywall দেখাও
-  if (!subLoading && !canPractice) {
+  // ফ্রি সেশন শেষে (subscribe না করলে) এই session-টাকে "ব্যবহৃত" হিসেবে মার্ক করা হয়
+  useEffect(() => {
+    if (finished && !isSubscribed) {
+      markFreeSessionUsed();
+    }
+  }, [finished, isSubscribed]);
+
+  if (sessionLocked) {
     return (
       <div className="min-h-screen bg-paper pb-24 dark:bg-ink-900">
         <Header title="প্র্যাকটিস" showBack />
         <main className="mx-auto max-w-lg px-4 py-10 text-center">
-          <div className="rounded-3xl bg-gradient-to-br from-ink-900 to-ink-700 p-8 text-white dark:from-ink-800 dark:to-ink-950">
-            <p className="text-5xl">🔒</p>
-            <p className="mt-3 font-display text-lg font-bold">আজকের ফ্রি প্র্যাকটিস শেষ</p>
+          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-ink-900 to-ink-700 p-8 text-white shadow-lg dark:from-ink-800 dark:to-ink-950">
+            <p className="text-5xl">🎯</p>
+            <p className="mt-3 font-display text-lg font-bold">তোমার ফ্রি প্র্যাকটিস সেশন শেষ</p>
             <p className="mt-1 text-sm opacity-80">
-              ফ্রি অ্যাকাউন্টে দিনে মাত্র {2} টা প্রশ্ন প্র্যাকটিস করা যায়। আনলিমিটেড প্র্যাকটিসের জন্য প্রিমিয়াম নাও।
+              আনলিমিটেড প্র্যাকটিস, সব বছরের প্রশ্ন ও সব টপিকের জন্য প্রিমিয়াম নাও।
             </p>
             <Link
               to="/subscription"
@@ -121,19 +115,28 @@ export const Practice: React.FC = () => {
     return (
       <div className="min-h-screen bg-paper pb-24 dark:bg-ink-900">
         <Header title="সেশন শেষ" showBack />
-        <main className="mx-auto max-w-lg px-4 py-8 text-center">
+        <main className="mx-auto max-w-lg space-y-4 px-4 py-8 text-center">
           <p className="text-5xl">{accuracy >= 70 ? '🎉' : '💪'}</p>
           <p className="mt-3 font-display text-2xl text-ink-900 dark:text-ink-100">
             Score: {correctCount}/{total}
           </p>
           <p className="mt-1 text-ink-500">সঠিক: {correctCount} · ভুল: {wrongCount} · Accuracy: {accuracy}%</p>
-          <div className="mt-6 flex justify-center gap-3">
-            <button
-              onClick={() => { setCurrentIndex(0); setCorrectCount(0); setWrongCount(0); setFinished(false); }}
-              className="rounded-full border border-ink-200 px-5 py-2 text-sm font-semibold text-ink-700 dark:border-ink-700/50 dark:text-ink-200"
-            >
-              আবার করো
-            </button>
+
+          {!isSubscribed && (
+            <div className="pt-2">
+              <UpgradeBanner title="আরও প্র্যাকটিস করতে চাও?" subtitle="প্রিমিয়াম নিয়ে আনলিমিটেড প্র্যাকটিস করো" />
+            </div>
+          )}
+
+          <div className="flex justify-center gap-3 pt-2">
+            {isSubscribed && (
+              <button
+                onClick={() => { setCurrentIndex(0); setCorrectCount(0); setWrongCount(0); setFinished(false); }}
+                className="rounded-full border border-ink-200 px-5 py-2 text-sm font-semibold text-ink-700 dark:border-ink-700/50 dark:text-ink-200"
+              >
+                আবার করো
+              </button>
+            )}
             <Link to="/" className="rounded-full bg-amber px-5 py-2 text-sm font-semibold text-ink-950">
               হোমে ফিরে যাও
             </Link>
@@ -145,7 +148,6 @@ export const Practice: React.FC = () => {
   }
 
   const q = sessionQuestions[currentIndex];
-  const freeLeft = remainingFreePractice(todayQuestionsDone);
 
   return (
     <div className="min-h-screen bg-paper pb-24 dark:bg-ink-900">
@@ -153,8 +155,7 @@ export const Practice: React.FC = () => {
       <main className="mx-auto max-w-lg px-4 py-4">
         {!isSubscribed && !subLoading && (
           <p className="mb-3 rounded-xl bg-amber/10 px-3 py-2 text-center text-xs text-amber-dark dark:text-amber">
-            আজ আর {freeLeft}টা ফ্রি প্রশ্ন বাকি —{' '}
-            <Link to="/subscription" className="underline">প্রিমিয়াম নিলে আনলিমিটেড</Link>
+            এটাই তোমার একমাত্র ফ্রি সেশন — শেষ হলে প্রিমিয়াম নিলে আনলিমিটেড হবে
           </p>
         )}
         <QuestionCard
