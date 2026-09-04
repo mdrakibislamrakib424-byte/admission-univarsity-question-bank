@@ -3,10 +3,14 @@ import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { useAppData } from '../context/AppDataContext';
+import { useSubscription } from '../hooks/useSubscription';
 import { banglaTopics } from '../data/topics';
+import { isTopicLocked } from '../utils/contentGate';
+import { UpgradeBanner } from '../components/UpgradeBanner';
 
 export const BanglaSection: React.FC = () => {
   const { questions } = useAppData();
+  const { isSubscribed, loading } = useSubscription();
   const banglaQuestions = useMemo(() => questions.filter(q => q.subject === 'বাংলা'), [questions]);
 
   const topicCounts = useMemo(() => {
@@ -18,33 +22,43 @@ export const BanglaSection: React.FC = () => {
   }, [banglaQuestions]);
 
   return (
-    <div className="pb-24">
+    <div className="min-h-screen bg-paper pb-24 dark:bg-ink-900">
       <Header title="বাংলা" showBack />
       <main className="mx-auto max-w-lg space-y-5 px-4 py-5">
         <section className="rounded-2xl border border-ink-200 bg-white p-4 dark:border-ink-700/40 dark:bg-ink-800">
           <p className="text-sm text-ink-500">মোট প্রশ্ন</p>
           <p className="text-2xl font-bold text-ink-900 dark:text-ink-100">{banglaQuestions.length}টি</p>
-          <Link
-            to={`/practice?subject=${encodeURIComponent('বাংলা')}`}
-            className="mt-3 block rounded-full bg-amber py-2.5 text-center text-sm font-semibold text-ink-950"
-          >
-            সব বাংলা প্রশ্ন প্র্যাকটিস করো
-          </Link>
         </section>
+
+        {!loading && !isSubscribed && (
+          <UpgradeBanner title="সব টপিক আনলক করো" subtitle="এখন শুধু ১টা টপিক ফ্রি — প্রিমিয়ামে সবগুলো খুলে যাবে" />
+        )}
 
         <section>
           <h2 className="mb-2 text-sm font-semibold text-ink-700 dark:text-ink-200">টপিক অনুযায়ী</h2>
           <div className="grid grid-cols-2 gap-2">
-            {topicCounts.map(({ topic, count }) => (
-              <Link
-                key={topic}
-                to={`/practice?subject=${encodeURIComponent('বাংলা')}&chapter=${encodeURIComponent(topic)}`}
-                className="rounded-xl border border-ink-200 bg-white p-3 text-sm dark:border-ink-700/40 dark:bg-ink-800"
-              >
-                <p className="font-medium text-ink-800 dark:text-ink-100">{topic}</p>
-                <p className="text-xs text-ink-400">{count}টি প্রশ্ন</p>
-              </Link>
-            ))}
+            {topicCounts.map(({ topic, count }) => {
+              const locked = !loading && isTopicLocked(topic, banglaTopics, isSubscribed);
+              const content = (
+                <div
+                  className={`relative rounded-xl border p-3 text-sm ${
+                    locked
+                      ? 'border-dashed border-ink-200 bg-ink-50 dark:border-ink-700/40 dark:bg-ink-900/40'
+                      : 'border-ink-200 bg-white dark:border-ink-700/40 dark:bg-ink-800'
+                  }`}
+                >
+                  <p className={`font-medium ${locked ? 'text-ink-400' : 'text-ink-800 dark:text-ink-100'}`}>{topic}</p>
+                  <p className="text-xs text-ink-400">{locked ? '🔒 প্রিমিয়াম' : `${count}টি প্রশ্ন`}</p>
+                </div>
+              );
+              return locked ? (
+                <Link key={topic} to="/subscription">{content}</Link>
+              ) : (
+                <Link key={topic} to={`/practice?subject=${encodeURIComponent('বাংলা')}&chapter=${encodeURIComponent(topic)}`}>
+                  {content}
+                </Link>
+              );
+            })}
           </div>
         </section>
       </main>
