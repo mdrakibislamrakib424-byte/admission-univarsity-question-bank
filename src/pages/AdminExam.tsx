@@ -5,12 +5,20 @@ import { useAuth } from '../context/AuthContext';
 import { useAppData } from '../context/AppDataContext';
 import { supabase } from '../lib/supabase';
 
+function currentWeekLabel(): string {
+  const now = new Date();
+  const jan1 = new Date(now.getFullYear(), 0, 1);
+  const week = Math.ceil(((now.getTime() - jan1.getTime()) / 86400000 + jan1.getDay() + 1) / 7);
+  return `${now.getFullYear()}-W${String(week).padStart(2, '0')}`;
+}
+
 export const AdminExam: React.FC = () => {
   const { user } = useAuth();
   const { questions } = useAppData();
   const [title, setTitle] = useState('');
   const [idsText, setIdsText] = useState('');
   const [duration, setDuration] = useState(30);
+  const [isWeeklyContest, setIsWeeklyContest] = useState(false);
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -40,7 +48,9 @@ export const AdminExam: React.FC = () => {
       question_ids: validIds,
       duration_minutes: duration,
       is_active: true,
-      created_by: user.id
+      created_by: user.id,
+      is_weekly_contest: isWeeklyContest,
+      contest_week_label: isWeeklyContest ? currentWeekLabel() : null
     });
     setSaving(false);
     if (error) {
@@ -113,6 +123,19 @@ export const AdminExam: React.FC = () => {
                 {validIds.length}টি সঠিক id পাওয়া গেছে{totalTyped - validIds.length > 0 && ` · ${totalTyped - validIds.length}টি খুঁজে পাওয়া যায়নি`}
               </p>
             )}
+          </div>
+
+          <div className="flex items-center justify-between rounded-2xl border border-amber/30 bg-amber/5 p-3.5">
+            <div>
+              <p className="text-sm font-medium text-ink-800 dark:text-ink-100">🏆 সাপ্তাহিক প্রতিযোগিতা</p>
+              <p className="text-xs text-ink-400">চালু করলে এই exam-এর ১ম স্থান "বিজয়ী তালিকা"-য় দেখাবে</p>
+            </div>
+            <button
+              onClick={() => setIsWeeklyContest(v => !v)}
+              className={`h-6 w-11 shrink-0 rounded-full transition-colors ${isWeeklyContest ? 'bg-amber' : 'bg-ink-300'}`}
+            >
+              <span className={`block h-5 w-5 rounded-full bg-white transition-transform ${isWeeklyContest ? 'translate-x-5' : 'translate-x-0.5'}`} />
+            </button>
           </div>
 
           {msg && (
