@@ -1,16 +1,12 @@
 // src/pages/ExamTake.tsx
-//
-// MockTest.tsx এর মতোই প্যাটার্ন ব্যবহার করা হয়েছে (সব প্রশ্ন এক পেজে,
-// টাইমার শেষ হলে বা "জমা দাও" চাপলে অটো সাবমিট) — যাতে দুই জায়গার UX
-// একরকম থাকে ও কোনো বাগ না হয়।
-
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useSubscription } from '../hooks/useSubscription';
 import { Header } from '../components/Header';
 import { useAppData } from '../context/AppDataContext';
 import { useAuth } from '../context/AuthContext';
+import { useSubscription } from '../hooks/useSubscription';
 import { supabase } from '../lib/supabase';
+import { hasUsedFreeExam, markFreeExamUsed } from '../utils/guestLimits';
 
 interface ExamRow {
   id: string;
@@ -23,7 +19,7 @@ export const ExamTake: React.FC = () => {
   const { examId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { isSubscribed, loading: subLoading } = useSubscription();
+  const { isSubscribed } = useSubscription();
   const { questions } = useAppData();
 
   const [exam, setExam] = useState<ExamRow | null>(null);
@@ -34,8 +30,12 @@ export const ExamTake: React.FC = () => {
   const [result, setResult] = useState<{ correct: number; wrong: number; skipped: number; score: number } | null>(null);
   const [startedAt] = useState(Date.now());
 
+  // Guest হয়ে থাকলে (login নেই) আর আগে থেকেই ১টা ফ্রি এক্সাম ব্যবহার হয়ে
+  // থাকলে, এবং সাবস্ক্রাইবও না থাকলে — এই পেজে ঢোকাই আটকে দাও।
+  const blocked = !user && !isSubscribed && hasUsedFreeExam();
+
   useEffect(() => {
-    if (!examId) return;
+    if (!examId || blocked) return;
     supabase
       .from('exams')
       .select('id, title, duration_minutes, question_ids')
@@ -46,7 +46,7 @@ export const ExamTake: React.FC = () => {
         if (data) setSecondsLeft(data.duration_minutes * 60);
         setLoading(false);
       });
-  }, [examId]);
+  }, [examId, blocked]);
 
   const examQuestions = useMemo(() => {
     if (!exam) return [];
@@ -54,7 +54,7 @@ export const ExamTake: React.FC = () => {
   }, [exam, questions]);
 
   const submitResult = useCallback(async () => {
-    if (!exam || !user || finished) return;
+    if (!exam || finished) return;
     setFinished(true);
     let correct = 0, wrong = 0, skipped = 0;
     examQuestions.forEach(q => {
@@ -65,20 +65,27 @@ export const ExamTake: React.FC = () => {
     });
     const score = correct - wrong * 0.25;
     setResult({ correct, wrong, skipped, score });
-    await supabase.from('exam_submissions').upsert(
-      {
-        exam_id: exam.id,
-        user_id: user.id,
-        total_questions: examQuestions.length,
-        correct_answers: correct,
-        wrong_answers: wrong,
-        skipped,
-        score,
-        time_taken_seconds: Math.round((Date.now() - startedAt) / 1000)
-      },
-      { onConflict: 'exam_id,user_id' }
-    );
-  }, [exam, user, finished, examQuestions, answers, startedAt]);
+
+    if (!isSubscribed) markFreeExamUsed(); // guest ও ফ্রি-লগইন উভয়ের জন্যই ১বারের সীমা মার্ক হয়
+
+    if (user) {
+      await supabase.from('exam_submissions').upsert(
+        {
+          exam_id: exam.id,
+          user_id: user.id,
+          total_questions: examQuestions.length,
+          correct_answers: correct,
+          wrong_answers: wrong,
+          skipped,
+          score,
+          time_taken_seconds: Math.round((Date.now() - startedAt) / 1000)
+        },
+        { onConflict: 'exam_id,user_id' }
+      );
+    }
+    // Guest হলে ফলাফল শুধু এই স্ক্রিনেই দেখানো হয়, সেভ হয় না —
+    // কারণ Supabase-এ user_id ছাড়া সাবমিশন রাখার উপায় নেই।
+  }, [exam, finished, examQuestions, answers, startedAt, user, isSubscribed]);
 
   useEffect(() => {
     if (!exam || finished) return;
@@ -90,32 +97,21 @@ export const ExamTake: React.FC = () => {
     return () => clearTimeout(t);
   }, [secondsLeft, exam, finished, submitResult]);
 
-  if (!user) {
+  if (blocked) {
     return (
-      <div className="pb-24">
+      <div className="min-h-screen bg-paper pb-24 dark:bg-ink-900">
         <Header title="এক্সাম" showBack />
-        <main className="mx-auto max-w-lg px-4 py-10 text-center text-sm text-ink-500">
-          এক্সাম দিতে আগে লগইন করো।
+        <main className="mx-auto max-w-lg px-4 py-10 text-center">
+          <p className="text-4xl">👑</p>
+          <p className="mt-3 text-sm text-ink-500">তোমার ফ্রি এক্সাম ব্যবহার হয়ে গেছে — প্রিমিয়াম নিয়ে আনলিমিটেড এক্সাম দাও।</p>
         </main>
       </div>
     );
   }
 
-  if (!subLoading && !isSubscribed) {
-    return (
-      <div className="pb-24">
-        <Header title="এক্সাম" showBack />
-        <main className="mx-auto max-w-lg px-4 py-10 text-center">
-          <p className="text-4xl">👑</p>
-          <p className="mt-3 text-sm text-ink-500">এক্সাম দিতে প্রিমিয়াম সাবস্ক্রিপশন লাগবে।</p>
-        </main>
-      </div>
-    );
-  }
-  
   if (loading) {
     return (
-      <div className="pb-24">
+      <div className="min-h-screen bg-paper pb-24 dark:bg-ink-900">
         <Header title="এক্সাম" showBack />
         <main className="mx-auto max-w-lg px-4 py-10 text-center text-sm text-ink-400">লোড হচ্ছে...</main>
       </div>
@@ -124,7 +120,7 @@ export const ExamTake: React.FC = () => {
 
   if (!exam || examQuestions.length === 0) {
     return (
-      <div className="pb-24">
+      <div className="min-h-screen bg-paper pb-24 dark:bg-ink-900">
         <Header title="এক্সাম" showBack />
         <main className="mx-auto max-w-lg px-4 py-10 text-center text-sm text-ink-500">এই এক্সামটি পাওয়া যায়নি।</main>
       </div>
@@ -133,7 +129,7 @@ export const ExamTake: React.FC = () => {
 
   if (finished && result) {
     return (
-      <div className="pb-24">
+      <div className="min-h-screen bg-paper pb-24 dark:bg-ink-900">
         <Header title="ফলাফল" showBack />
         <main className="mx-auto max-w-lg space-y-4 px-4 py-8 text-center">
           <p className="text-5xl">🏁</p>
@@ -152,11 +148,16 @@ export const ExamTake: React.FC = () => {
               <p className="text-xs text-ink-500">স্কোর / {examQuestions.length}</p>
             </div>
           </div>
+          {!user && (
+            <p className="rounded-xl bg-amber/10 p-3 text-xs text-amber-dark dark:text-amber">
+              এই ফলাফল সেভ হয়নি — লগইন করে থাকলে ফলাফল স্থায়ীভাবে সেভ হয়ে যেত।
+            </p>
+          )}
           <button
-            onClick={() => navigate('/exam-results')}
+            onClick={() => navigate(user ? '/exam-results' : '/subscription')}
             className="w-full rounded-full bg-amber py-2.5 text-sm font-semibold text-ink-950"
           >
-            আমার সব রেজাল্ট দেখো
+            {user ? 'আমার সব রেজাল্ট দেখো' : '👑 প্রিমিয়াম নাও'}
           </button>
         </main>
       </div>
@@ -168,7 +169,7 @@ export const ExamTake: React.FC = () => {
   const answeredCount = Object.values(answers).filter(a => a !== null && a !== undefined).length;
 
   return (
-    <div className="pb-24">
+    <div className="min-h-screen bg-paper pb-24 dark:bg-ink-900">
       <div className="sticky top-0 z-20 flex items-center justify-between border-b border-ink-200 bg-paper/95 px-4 py-3 backdrop-blur dark:border-ink-700/50 dark:bg-ink-900/95">
         <span className="text-sm text-ink-500">{answeredCount}/{examQuestions.length} উত্তর দেওয়া</span>
         <span className={`font-mono text-lg font-semibold ${secondsLeft < 60 ? 'text-brick' : 'text-ink-800 dark:text-ink-100'}`}>
