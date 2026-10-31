@@ -1,8 +1,3 @@
-// src/components/ErrorBoundary.tsx
-//
-// অ্যাপের কোনো অংশে অপ্রত্যাশিত এরর (crash) হলে পুরো সাদা স্ক্রিন না
-// দেখিয়ে একটা বন্ধুত্বপূর্ণ মেসেজ দেখানোর জন্য।
-
 import React from 'react';
 
 interface Props {
@@ -11,16 +6,17 @@ interface Props {
 
 interface State {
   hasError: boolean;
+  message: string;
 }
 
 export class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, message: '' };
   }
 
-  static getDerivedStateFromError(): State {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, message: String(error?.stack || error?.message || error) };
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
@@ -28,7 +24,6 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   handleReload = () => {
-    this.setState({ hasError: false });
     window.location.reload();
   };
 
@@ -40,7 +35,9 @@ export class ErrorBoundary extends React.Component<Props, State> {
           <p className="font-display text-lg font-semibold text-ink-900 dark:text-ink-100">
             দুঃখিত, একটা সমস্যা হয়েছে
           </p>
-          <p className="text-sm text-ink-500">অ্যাপটা রিলোড করলেই ঠিক হয়ে যাওয়ার কথা।</p>
+          <p className="max-h-64 w-full overflow-auto break-words rounded-xl bg-white p-3 text-left font-mono text-[10px] text-brick-dark">
+            {this.state.message}
+          </p>
           <button
             onClick={this.handleReload}
             className="rounded-full bg-amber px-6 py-2.5 text-sm font-semibold text-ink-950"
