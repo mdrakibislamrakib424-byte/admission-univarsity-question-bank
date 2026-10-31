@@ -42,6 +42,19 @@ jobs:
       - name: Sync web build into Android project
         run: npx cap sync android
 
+      - name: Add AdMob App ID to AndroidManifest
+        env:
+          ADMOB_APP_ID_SECRET: ${{ secrets.ADMOB_APP_ID }}
+        run: |
+          APP_ID="${ADMOB_APP_ID_SECRET:-ca-app-pub-3940256099942544~3347511713}"
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          if grep -q "com.google.android.gms.ads.APPLICATION_ID" "$MANIFEST"; then
+            echo "App ID আগে থেকেই আছে।"
+          else
+            sed -i "s#</application>#    <meta-data android:name=\"com.google.android.gms.ads.APPLICATION_ID\" android:value=\"$APP_ID\"/>\n    </application>#" "$MANIFEST"
+            echo "✅ AdMob App ID বসানো হয়েছে।"
+          fi
+          grep -n "APPLICATION_ID" "$MANIFEST" || echo "⚠️ App ID পাওয়া যায়নি"
       - name: Generate app icon & splash screen
         run: |
           if [ -f "resources/icon.png" ] && [ -f "resources/splash.png" ]; then
